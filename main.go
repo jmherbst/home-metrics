@@ -5,18 +5,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"google.golang.org/appengine"
-
-	// [START imports]
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	// [END imports]
 )
 
 var (
@@ -42,6 +42,11 @@ type templateParams struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Errorf(context.Background(), "Error loading .env file")
+	}
+
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/metrics", metricsHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
@@ -107,6 +112,16 @@ func metricsHandler(w http.ResponseWriter, request *http.Request) {
 
 func particleWebhookHandler(w http.ResponseWriter, request *http.Request) {
 	ctx := appengine.NewContext(request)
+
+	webhookAuth := os.Getenv("PARTICLE_WEBHOOK_AUTH")
+
+	auth := request.Header.Get("Authorization")
+	if auth != webhookAuth {
+		log.Errorf(ctx, "Webhook doesn't have valid Authorizatoin header")
+
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	decoder := json.NewDecoder(request.Body)
 
