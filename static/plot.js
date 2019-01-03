@@ -13,6 +13,10 @@ Plotly.d3.json(metricsUrl, function(error, response) {
   var y = [];
   var events = response.Events;
 
+  if (!events) {
+    return console.log("No events to plot.");
+  }
+  
   for (i = 0; i < events.length; i++) { 
     x.push(new Date(events[i].published_at));
     y.push(parseFloat(events[i].data));
