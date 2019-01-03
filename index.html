@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+  <title>Home Metrics</title>
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="/static/plot.js"></script>
+</head>
+<body>
+
+<h1>Home Metrics</h1>
+
+<div id="SumpPumpPlot"></div>
+
+{{with .Events}}
+<ol>
+  {{range .}}
+  <li><cite>{{.Name}}</cite><p>{{.Data}}</p><p>{{.Time}}</p></li>
+  {{end}}
+</ol>
+{{end}}
+</body>
+</html>
