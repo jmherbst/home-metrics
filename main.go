@@ -11,6 +11,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -61,24 +62,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
-
-	params := templateParams{}
-
-	// Create query for Webhook events
-	q := datastore.NewQuery("Event").Order("-Time").Limit(20)
-
-	// Get all Webhook events
-	if _, err := q.GetAll(ctx, &params.Events); err != nil {
-		log.Errorf(ctx, "Getting events: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		params.Notice = "Couldn't get latest events. Refresh?"
-		indexTemplate.Execute(w, params)
-		return
-	}
-
 	if r.Method == "GET" {
-		indexTemplate.Execute(w, params)
+		indexTemplate.Execute(w, "")
 		return
 	}
 
@@ -90,8 +75,28 @@ func metricsHandler(w http.ResponseWriter, request *http.Request) {
 
 	params := templateParams{}
 
-	// Create query for Webhook events
-	q := datastore.NewQuery("Event").Order("-Time").Limit(200)
+	queryLimit, err := strconv.Atoi(request.URL.Query().Get("limit"))
+	if err != nil { // No limit param was passed
+		queryLimit = 200
+		//return
+	}
+
+	// Create query for metrics
+	q := datastore.NewQuery("Event").Order("-Time").Limit(queryLimit)
+
+	// Restructure query if time was queried in request
+	layout := time.RFC3339
+	queryTime, err := time.Parse(layout, request.URL.Query().Get("time"))
+	if err != nil {
+		log.Errorf(ctx, "Error parsing time query param: %v", err)
+	} else {
+		log.Infof(ctx, "Recieved Date: %v", queryTime)
+
+		// Query should look like:
+		// SELECT * FROM `Event` WHERE `Time` <= "2019-01-03T09:30:20.00002-05:00"
+		// Default for GetAll limit is 1k
+		q = q.Filter("Time >= ", queryTime).Limit(1000)
+	}
 
 	// Get all Webhook events
 	if _, err := q.GetAll(ctx, &params.Events); err != nil {

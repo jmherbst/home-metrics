@@ -1,16 +1,73 @@
 <!doctype html>
 <html>
+
 <head>
   <title>Home Metrics</title>
+  <!--JQuery Stuff-->
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+    crossorigin="anonymous">
+    </script>
+
+  <!--Semantic UI Stuff-->
+  <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui-calendar/0.0.8/calendar.min.css">
+  <script src="semantic/dist/semantic.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui-calendar/0.0.8/calendar.min.js"></script>
+
+  <!--Custom Styles-->
   <link rel="stylesheet" type="text/css" href="/static/style.css">
+
+  <!--Plot.ly Javascript stuff-->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="/static/plot.js"></script>
 </head>
+
 <body>
 
-<h1>Home Metrics</h1>
+  <h1>Home Metrics</h1>
 
-<div id="SumpPumpPlot"></div>
+  <h3>Choose start date</h3>
+  <div class="ui calendar" id="metrics-calendar">
+    <div class="ui input left icon">
+      <i class="calendar icon"></i>
+      <input type="text" placeholder="Date/Time">
+    </div>
+  </div>
+  <br />
 
+  <div id="SumpPumpPlot"></div>
+
+  <script>
+    // Initial plot on page load
+    plotMetrics(200);
+
+    // This is required to preserve the timezone when converting to ISO format
+    Date.prototype.toIsoString = function () {
+      var tzo = -this.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function (num) {
+          var norm = Math.floor(Math.abs(num));
+          return (norm < 10 ? '0' : '') + norm;
+        };
+      return this.getFullYear() +
+        '-' + pad(this.getMonth() + 1) +
+        '-' + pad(this.getDate()) +
+        'T' + pad(this.getHours()) +
+        ':' + pad(this.getMinutes()) +
+        ':' + pad(this.getSeconds()) +
+        dif + pad(tzo / 60) +
+        ':' + pad(tzo % 60);
+    }
+
+    $('#metrics-calendar').calendar({
+      type: 'datetime',
+      disableMinute: true,
+      on: 'click',
+      onHidden: function () {
+        plotMetrics();
+      }
+    });
+  </script>
 </body>
+
 </html>
